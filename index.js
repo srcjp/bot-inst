@@ -100,9 +100,11 @@ async function postarNoInstagram() {
 
 // Agendamento da tarefa (Cron Job)
 console.log('Script iniciado. Aguardando o horário agendado para postar...');
+
+console.log(`Horário atual do container: ${new Date().toString()}`);
 cron.schedule('30 6 * * *', postarNoInstagram, {
     scheduled: true,
-    timezone: process.env.CRON_TIMEZONE || "America/Sao_Paulo",
+    //timezone: process.env.CRON_TIMEZONE || "America/Sao_Paulo",
 });
 
 // Opcional: Descomente a linha abaixo para executar uma vez ao iniciar o script para teste
