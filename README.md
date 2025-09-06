@@ -84,3 +84,15 @@ Siga os passos abaixo no terminal da sua máquina virtual.
   ```bash
   docker rm meu-poster
   ```
+
+**QUANDO PRECISAR**
+
+# Pare e remova o container antigo
+docker stop meu-poster
+docker rm meu-poster
+
+# Reconstrua a imagem com o código novo
+docker build -t instagram-poster .
+
+# Inicie o novo container
+docker run -d --name meu-poster --restart always --env-file .env instagram-poster
