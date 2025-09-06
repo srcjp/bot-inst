@@ -1,5 +1,11 @@
-# Use uma imagem oficial do Node.js baseada em Alpine Linux, que é leve e tem suporte para ARM (linux/arm64)
+# Use uma imagem oficial do Node.js baseada em Alpine Linux
 FROM --platform=linux/arm64 node:18-alpine
+
+# Instala o pacote com os dados de fuso horário
+RUN apk add --no-cache tzdata
+
+# Configura o fuso horário padrão do container
+ENV TZ=America/Sao_Paulo
 
 # Cria o diretório da aplicação dentro do container
 WORKDIR /usr/src/app
