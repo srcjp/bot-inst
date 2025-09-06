@@ -1,0 +1,16 @@
+{
+  "name": "instagram-poster",
+  "version": "1.0.0",
+  "description": "Um script Node.js para postar imagens no Instagram baseado no dia da semana.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "instagram-private-api": "^1.46.1",
+    "node-cron": "^3.0.3"
+  }
+}
