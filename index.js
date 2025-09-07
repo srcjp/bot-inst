@@ -176,7 +176,7 @@ cron.schedule('* * * * *', () => {
   // console.log(`Verificando... Hora em SP: ${horaSP}:${minutoSP}. Post de hoje feito: ${postDeHojeFeito}`);
 
   // Condição para postar: Hora é 6, minuto é 30 e o post de hoje ainda não foi feito
-  if (horaSP === 6 && minutoSP === 48 && !postDeHojeFeito) {
+  if (horaSP === 6 && minutoSP === 51 && !postDeHojeFeito) {
     console.log('Hora correta! (6:30). Iniciando postagem...');
     postarNoInstagram();
   }
