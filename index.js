@@ -5,8 +5,6 @@ const cron = require('node-cron');
 require('dotenv').config();
 
 const SESSION_PATH = path.join(__dirname, 'session.json');
-
-// Mapeia o dia da semana para o nome da pasta
 const diasDaSemana = [
   'domingo',
   'segunda',
@@ -17,15 +15,10 @@ const diasDaSemana = [
   'sabado',
 ];
 
-// Variável para controlar se o post do dia já foi feito
 let postDeHojeFeito = false;
-let ultimoDiaPostado = -1; // -1 significa que nenhum post foi feito ainda
+let ultimoDiaPostado = -1;
 
-/**
- * Função para fazer login e gerenciar a sessão
- */
 async function login(ig) {
-  // ... (A função de login permanece a mesma)
   console.log('Iniciando processo de login...');
   ig.state.generateDevice(process.env.IG_USERNAME);
 
@@ -40,9 +33,12 @@ async function login(ig) {
     }
   } catch (e) {
     console.warn(
-      'Não foi possível usar a sessão salva. Fazendo login completo.',
-      e.message,
+      'Não foi possível usar a sessão salva. Deletando arquivo de sessão...',
     );
+    // Se a sessão está corrompida ou expirada, deleta o arquivo para forçar um novo login.
+    if (await fileExists(SESSION_PATH)) {
+      await fs.unlink(SESSION_PATH);
+    }
   }
 
   console.log(`Tentando login completo como ${process.env.IG_USERNAME}...`);
@@ -56,17 +52,18 @@ async function login(ig) {
 }
 
 async function postarNoInstagram() {
+  const hoje = new Date(); // Definido aqui para usar no catch
   console.log('Iniciando o processo de postagem...');
   const ig = new IgApiClient();
 
   try {
     await login(ig);
 
-    const hoje = new Date();
     const nomePastaDia = diasDaSemana[hoje.getDay()];
     console.log(`Hoje é ${nomePastaDia}. Buscando conteúdo...`);
 
     const caminhoBase = path.join(__dirname, 'posts', nomePastaDia);
+    // ... (o resto da lógica de postagem continua a mesma)
     const arquivosNaPasta = await fs.readdir(caminhoBase);
     const arquivosDeImagem = arquivosNaPasta.filter((file) =>
       /\.(png|jpg|jpeg)$/i.test(file),
@@ -119,21 +116,37 @@ async function postarNoInstagram() {
     }
 
     console.log('Post publicado com sucesso!');
-    postDeHojeFeito = true; // Marca que o post de hoje foi feito
-    ultimoDiaPostado = hoje.getDay(); // Guarda o dia que postamos
+    postDeHojeFeito = true;
+    ultimoDiaPostado = hoje.getDay();
   } catch (error) {
-    console.error('Ocorreu um erro durante o processo:', error);
-    if (error.name === 'IgCheckpointError') {
+    console.error(
+      'Ocorreu um erro durante o processo:',
+      error.constructor.name,
+    );
+    // *** LÓGICA DE ERRO MELHORADA ***
+    if (
+      error.name === 'IgCheckpointError' ||
+      error.name === 'IgResponseError'
+    ) {
       console.error(
         '******************************************************************',
       );
-      console.error('!!! AÇÃO NECESSÁRIA: CHECKPOINT DO INSTAGRAM !!!');
+      console.error('!!! ERRO DE LOGIN DETECTADO PELO INSTAGRAM !!!');
       console.error(
-        'Acesse sua conta pelo celular/navegador para confirmar sua identidade.',
+        'A conta pode estar bloqueada por um checkpoint. Verifique sua conta no app ou navegador.',
+      );
+      console.error(
+        'O script NÃO tentará postar novamente hoje para proteger sua conta.',
       );
       console.error(
         '******************************************************************',
       );
+
+      // Trava as tentativas para o resto do dia para evitar bloqueios.
+      postDeHojeFeito = true;
+      ultimoDiaPostado = hoje.getDay();
+    } else {
+      console.error('Ocorreu um erro inesperado:', error);
     }
   }
 }
@@ -147,11 +160,7 @@ async function fileExists(filePath) {
   }
 }
 
-// *** LÓGICA DE AGENDAMENTO ALTERADA ***
-
-// Roda a cada minuto para verificar a hora
 cron.schedule('* * * * *', () => {
-  // Pega a hora atual especificamente no fuso horário de São Paulo
   const agora = new Date();
   const horaSP = parseInt(
     agora.toLocaleTimeString('pt-BR', {
@@ -167,16 +176,11 @@ cron.schedule('* * * * *', () => {
   );
   const diaDaSemanaSP = agora.getDay();
 
-  // Reinicia o controle se o dia mudou
   if (diaDaSemanaSP !== ultimoDiaPostado) {
     postDeHojeFeito = false;
   }
 
-  // DEBUG: Mostra a hora atual a cada minuto para você poder verificar
-  // console.log(`Verificando... Hora em SP: ${horaSP}:${minutoSP}. Post de hoje feito: ${postDeHojeFeito}`);
-
-  // Condição para postar: Hora é 6, minuto é 30 e o post de hoje ainda não foi feito
-  if (horaSP === 6 && minutoSP === 51 && !postDeHojeFeito) {
+  if (horaSP === 6 && minutoSP === 30 && !postDeHojeFeito) {
     console.log('Hora correta! (6:30). Iniciando postagem...');
     postarNoInstagram();
   }
