@@ -1,23 +1,21 @@
-# Use uma imagem oficial do Node.js baseada em Alpine Linux
+# Define a arquitetura ARM64 (Oracle Cloud) e a imagem base do Node
 FROM --platform=linux/arm64 node:18-alpine
 
-# Instala o pacote com os dados de fuso horário
+# 1. Instala e configura o fuso horário (Essencial para postar às 06:30 do Brasil)
 RUN apk add --no-cache tzdata
-
-# Configura o fuso horário padrão do container
 ENV TZ=America/Sao_Paulo
 
-# Cria o diretório da aplicação dentro do container
+# 2. Define a pasta de trabalho dentro do container
 WORKDIR /usr/src/app
 
-# Copia os arquivos de definição de pacotes
+# 3. Copia os arquivos de dependências primeiro (para aproveitar o cache do Docker)
 COPY package*.json ./
 
-# Instala as dependências do projeto
+# 4. Instala as dependências
 RUN npm install
 
-# Copia o restante dos arquivos da aplicação (código fonte e posts)
+# 5. Copia todo o resto do código (index.js, autenticar.js, pasta posts, etc.)
 COPY . .
 
-# Comando para iniciar a aplicação quando o container for executado
+# 6. Comando que roda quando o container inicia
 CMD [ "node", "index.js" ]

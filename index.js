@@ -35,9 +35,13 @@ async function login(ig) {
     console.warn(
       'Sessão inválida ou expirada. Deletando arquivo para forçar novo login...',
     );
-    if (await fileExists(SESSION_PATH)) {
-      await fs.unlink(SESSION_PATH);
-    }
+    console.warn(
+      'Sessão parece inválida. O script vai parar para evitar bloqueio.',
+    );
+    console.warn(
+      'Por favor, delete o session.json manualmente e rode o script "autenticar.js" novamente.',
+    );
+    return; // Pa
   }
   console.log(`Tentando login completo como ${process.env.IG_USERNAME}...`);
   await ig.account.login(process.env.IG_USERNAME, process.env.IG_PASSWORD);
